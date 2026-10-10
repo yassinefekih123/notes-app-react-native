@@ -1,20 +1,71 @@
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import "react-native-gesture-handler";
+import React from "react";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  ActivityIndicator,
+} from "react-native";
+import { NavigationContainer } from "@react-navigation/native";
+import { createStackNavigator } from "@react-navigation/stack";
+import HomeScreen from "./screens/HomeScreen";
+import NotesScreen from "./screens/NotesScreen";
+import AuthScreen from "./screens/AuthScreen";
+import { AuthProvider, useAuth } from "./lib/AuthContext";
 
-export default function App() {
+const Stack = createStackNavigator();
+
+function AppNavigator() {
+  const { user, loading, logout } = useAuth();
+
+  // While we check if a session exists
+  if (loading) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <ActivityIndicator size="large" color="#3498db" />
+      </View>
+    );
+  }
+
+  // Not logged in: show the login/register screen
+  if (!user) {
+    return <AuthScreen />;
+  }
+
+  // Logged in: show the app
   return (
-    <View style={styles.container}>
-      <Text>Open up App.js to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
+    <NavigationContainer>
+      <Stack.Navigator initialRouteName="Home">
+        <Stack.Screen
+          name="Home"
+          component={HomeScreen}
+          options={{
+            title: "Notes App",
+            headerStyle: { backgroundColor: "#f4511e" },
+            headerTintColor: "#fff",
+            headerRight: () => (
+              <TouchableOpacity onPress={logout} style={{ marginRight: 15 }}>
+                <Text style={{ color: "white", fontWeight: "bold" }}>
+                  Logout
+                </Text>
+              </TouchableOpacity>
+            ),
+          }}
+        />
+        <Stack.Screen
+          name="Notes"
+          component={NotesScreen}
+          options={{ title: "My Notes" }}
+        />
+      </Stack.Navigator>
+    </NavigationContainer>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
+export default function App() {
+  return (
+    <AuthProvider>
+      <AppNavigator />
+    </AuthProvider>
+  );
+}
